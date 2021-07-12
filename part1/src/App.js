@@ -1,94 +1,70 @@
 import React, { useState } from 'react'
 
-const Header = ({ text }) => {
-  return(
-    <>
-      <h1>{text}</h1>
-    </>
-  )
+const random = array => Math.floor(Math.random()*array.length)
+
+const findestGreatestIndex = array => {
+  const arrayCopy = [...array]
+  const largestNumber = arrayCopy.sort()[array.length-1]
+  const largestIndex = array.findIndex(number => number === largestNumber)
+  return largestIndex
 }
 
-const TableColumn = ({ text, value }) => {
+const Button = ({ text, buttonHandler }) => {
   return(
-    <>
-      <tr>
-        <th>{text}</th>
-        <td>{value}</td>
-      </tr>
-    </>
+    <button onClick={buttonHandler}>
+      {text}
+    </button>
   )
 }
-
-const Statistic = ({ text, value }) => {
+const Anecdote = (props) => {
   return(
     <>
+      <h1>Anecdote {props.text}</h1>
       <p>
-        {text} {value}
+        {props.anecdotes}
+      </p>
+      <p>
+        has {props.votes} votes
       </p>
     </>
   )
 }
 
-const Button = (props) => {
-  return(
-    <>
-      <button onClick={props.handleButton}>
-        {props.text}
-      </button>
-    </>
-  )
-}
-
-const Buttons = (props) => {
-  return(
-    <>
-      <Header text="give feedback"/>
-      <Button handleButton={props.handleGood} text="good"/>
-      <Button handleButton={props.handleNeutral} text="neutral"/>
-      <Button handleButton={props.handleBad} text="bad"/>
-    </>
-  )
-}
-const Statistics = ({ good, neutral, bad }) => {
-  const all = good + neutral + bad
-  const average = ((good*1)+(bad*-1))/all
-  const positive = (good/all)*100 + ' %'
-  if (all==0) {
-    return(
-      <>
-        <Header text="statistics"/>
-        <Statistic text="No information given"/>
-      </>
-    )
-  }
-  return(
-    <>
-      <Header text="statistics"/>
-      <table>
-        <TableColumn  text="good" value={good}/>
-        <TableColumn  text="neutral" value={neutral}/>
-        <TableColumn  text="bad" value={bad}/>
-        <TableColumn  text="all" value={all}/>
-        <TableColumn  text="average" value={average}/>
-        <TableColumn  text="positive" value={positive}/>
-      </table>
-    </>
-  )
-}
-
 const App = () => {
-  // save clicks of each button to its own state
-  const [good, setGood] = useState(0)
-  const [neutral, setNeutral] = useState(0)
-  const [bad, setBad] = useState(0)
-  const giveGood = () => setGood(good + 1)
-  const giveNeutral = () => setNeutral(neutral + 1)
-  const giveBad = () => setBad(bad + 1)
+  const anecdotes = [
+    'If it hurts, do it more often',
+    'Adding manpower to a late software project makes it later!',
+    'The first 90 percent of the code accounts for the first 90 percent of the development time...The remaining 10 percent of the code accounts for the other 90 percent of the development time.',
+    'Any fool can write code that a computer can understand. Good programmers write code that humans can understand.',
+    'Premature optimization is the root of all evil.',
+    'Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it.',
+    'Programming without an extremely heavy use of console.log is same as if a doctor would refuse to use x-rays or blod tests when dianosing patients'
+  ]
+   
+  const [selected, setSelected] = useState(0)
+  const [vote, setVote] = useState(Array.apply(null, new Array(7)).map(Number.prototype.valueOf,0))
+
+  let randomNumber = random(anecdotes)
+  if (randomNumber===selected){
+    randomNumber = random(anecdotes)
+  }
+
+  let nextAnecdote = () => setSelected(randomNumber)
+  let addVote = () => {
+    const copy = [...vote]
+    copy[selected] +=1
+    setVote(copy)
+  }
+
+  let voteCopy = [...vote]
+  const indexNeeded = findestGreatestIndex(voteCopy)
 
   return (
     <>
-      <Buttons handleGood={giveGood} handleNeutral={giveNeutral} handleBad={giveBad}/>
-      <Statistics good={good} neutral={neutral} bad={bad}/>
+      <Anecdote text="of the day" anecdotes={anecdotes[selected]} votes={vote[selected]}/>
+      <Button text="vote" buttonHandler={addVote}/>
+      <Button text="next anecdote" buttonHandler={nextAnecdote}/>
+      <Anecdote text="with most votes" anecdotes={anecdotes[indexNeeded]} votes={vote[indexNeeded]}/>
     </>
   )
 }
