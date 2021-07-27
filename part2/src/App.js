@@ -1,63 +1,110 @@
-import React, { useState } from 'react'
-import Filter from './components/Filter'
-import PersonForm from './components/PersonForm'
-import Persons from './components/Persons'
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
+
+const Filter = (props) => {
+  return(
+    <div>
+        find countries <input value={props.filter} onChange={props.filterChange}/>
+    </div>
+  )
+}
+const Countries = ({ countries, setFilter, filter }) => {
+  const [weather, setWeather] = useState([])
+  const [city, setCity] = useState('')
+
+
+  let countriesResult=''
+  const countriesNames = countries.map(country => country.name)
+  const filteredCountries = countriesNames.filter(string => string.toUpperCase().includes(filter.toUpperCase()))
+
+  useEffect(() => {
+    axios
+      .get('/current')
+      .then(response => {
+        setWeather(response.data)
+        console.log(response.data)
+      })
+      .catch(error => {
+        console.log(error)})
+  }, []) 
+
+    useEffect(()=>{
+      if(filteredCountries.length===1){
+        const shownCountry = countries[ countries.findIndex(country => country.name===filteredCountries[0]) ]
+        setCity(shownCountry.capital)
+        console.log(city)
+      }
+    }, [city])
+
+
+  const handleCountryShown = (event) =>{
+    event.preventDefault()
+    const countryName = event.target.innerText.substring(0,event.target.innerText.length-5)
+    setFilter(countryName)
+  }
+
+  // let countriesResult=''
+  // const countriesNames = countries.map(country => country.name)
+  // const filteredCountries = countriesNames.filter(string => string.toUpperCase().includes(filter.toUpperCase()))
+
+  if (filteredCountries.length > 10 && filter.length > 0){
+    countriesResult = <div>
+      Too many matches, specify another filler
+    </div>
+  }
+  if (filteredCountries.length < 10 && filteredCountries.length > 1){
+      countriesResult=filteredCountries.map((country,i) => 
+        <form onSubmit={handleCountryShown} key={i}>{country+"     "}
+          <button type='submit'>show</button>
+        </form>
+      )
+  }
+  if (filteredCountries.length===1){
+
+    const shownCountry = countries[ countries.findIndex(country => country.name===filteredCountries[0]) ]
+    // setCity(shownCountry.capital)
+
+    countriesResult = 
+    <>
+      <h1><strong>{shownCountry.name}</strong></h1>
+      <div>capital {shownCountry.capital}</div>
+      <div>population {shownCountry.population}</div>
+      <h2><strong>languages</strong></h2>
+      <ul>
+        {shownCountry['languages'].map((country,i) => 
+          <li key={i}>{country.name}</li>)}
+      </ul>
+      <img src={shownCountry.flag} width="150" height="150" alt="Flag of country"></img>
+    </>
+  }
+  return(
+    <div>
+      {countriesResult}
+    </div>
+
+  )
+}
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456' },
-    { name: 'Ada Lovelace', number: '39-44-5323523' },
-    { name: 'Dan Abramov', number: '12-43-234345' },
-    { name: 'Mary Poppendieck', number: '39-23-6423122' }
-  ])
-  const [ newName, setNewName ] = useState('')
-  const [ newNumber, setNewNumber ] = useState('')
-  const [ newFilter, setNewFilter] = useState('')
+  const [countries, setCountries] = useState([])
+  const [filter, setFilter] = useState('')
 
-  const addPerson = (event) => {
-    event.preventDefault()
-    const personObject = {
-      name: newName,
-      number : newNumber
-    }
+  useEffect(() => {
+    axios
+      .get('/rest/v2/all')
+      .then(res => {
+        setCountries(res.data)
+      })
+  }, [])  
 
-    const isNameUnique = persons.some(person => person['name']===newName)
-    const isNumberUnique = persons.some(person => person['number']===newNumber)
-
-    if (isNameUnique) 
-      alert(`Name ${newName} is already added to phonebook`)
-    else if (isNumberUnique) 
-      alert(`Number ${newNumber} is already added to phonebook`)
-    else{
-      setPersons(persons.concat(personObject))
-      setNewName('')
-      setNewNumber('')
-    }
-  }
   const handleFilterChange = (event) => {
-    setNewFilter(event.target.value)
-  }
-  const handleNameChange = (event) => {
-    setNewName(event.target.value)
-  }
-  const handleNumberChange = (event) => {
-    setNewNumber(event.target.value)
+    setFilter(event.target.value)
   }
 
   return (
     <div>
-      <h2>Phonebook</h2>
-
-      <Filter text={'filter shown with'} value={newFilter} onChange={handleFilterChange}/>
-
-      <h3>Add a new</h3>
-
-      <PersonForm submitFunction={addPerson} nameValue={newName} nameChange={handleNameChange} numberValue={newNumber} numberChange={handleNumberChange}/>
-
-      <h3>Numbers</h3>
-
-      <Persons filter={newFilter} persons={persons}/>
-
+      <Filter filter={filter} filterChange={handleFilterChange}/>
+      <Countries countries={countries} filter={filter} setFilter={setFilter}/>
     </div>
   )
 }
